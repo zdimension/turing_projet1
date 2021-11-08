@@ -1,0 +1,296 @@
+# O(C^2) = O(n^2)
+# Pour chaque chiffre de B:
+#   Pour chaque chiffre de A:
+#     On parcourt C et on retire un chiffre
+# -> C+(C-1)+(C-2)+(C-3)+...
+# -> Gauss: C(C+1)/2
+# -> C^2
+NEW "EXO1" 1
+START @INIT
+END @YES "VALID"
+END @TOO_LOW "INVALID"
+END @TOO_HIGH "INVALID"
+# C = A * B
+FROM @INIT # on va tout à droite
+'1|'=|'x R @INIT
+'_ L @NEXT
+FROM @NEXT # ici on décrémente B de 1 et C de A
+'1 '_ L @LEFT
+'x L @CHECK
+FROM @LEFT
+'1 L @LEFT
+'x L @READ
+FROM @READ
+'1 'A L @NAV
+'= R @INIT
+FROM @NAV
+'1|'= L @NAV
+'_ R @NAVEND
+FROM @NAVEND
+'1 '_ R @NAVNEXT
+'= S @TOO_LOW # C < A * B
+FROM @NAVNEXT
+'1|'= R @NAVNEXT
+'A '1 L @READ
+FROM @CHECK
+'1|'= L @CHECK
+'_ R @CHECK2
+FROM @CHECK2
+'= S @YES # C = A * B
+'1 S @TOO_HIGH # C > A * B
+
+# O(n)
+# Base 1 donc nombre de chiffres ~= longueur entrée
+# Copie = O(C) = O(n)
+# Parcours = O(C) = O(n)
+# Total = O(2n) = O(n)
+NEW "EXO2" 3
+START @FIND_A
+END @YES "VALID"
+UNDEFINED @NO "INVALID"
+FROM @FIND_A
+'1,'_,'_ R,S,S @FIND_A
+'=,'_,'_ R,S,S @COPY_A
+FROM @COPY_A
+'1,'_,'_ '1,'1,'_ R,R,S @COPY_A
+'x,'_,'_ R,S,S @COPY_B
+FROM @COPY_B
+'1,'_,'_ '1,'_,'1 R,S,R @COPY_B
+'_,'_,'_ L,L,L @FIND_C
+FROM @FIND_C
+'1|'x,'1,'1 L,S,S @FIND_C
+'=,'1,'1 L,S,S @ERASE_LEFT
+FROM @ERASE_LEFT
+'1,'1,'1 '_,'1,'1 L,L,S @ERASE_LEFT
+'1,'_,'1 '1,'_,'1 S,R,L @ERASE_RIGHT
+'_,'_,'1 S,S,L @CHECK
+FROM @ERASE_RIGHT
+'1,'1,'1 '_,'1,'1 L,R,S @ERASE_RIGHT
+'1,'_,'1 '1,'_,'1 S,L,L @ERASE_LEFT
+'_,'_,'1 S,S,L @CHECK
+FROM @CHECK
+'_,'_,'_ S,S,S @YES
+
+# Parcours à droite : n
+# Soit H(m) = poids de Hamming de m, soit le nombre de 1 présents dans le mot
+# Répéter H(B) fois :
+#   Décrémentation B : 1
+#   Si chiffre != 0 : copie/ajout A : n
+# Vérification finale : n
+# Dans le meilleur cas (produit de puissances de 2, donc nombres de la forme 10*), H(B) proche de zéro
+# -> boucle proche de O(n), complexité totale O(n)
+# Dans le pire cas / cas moyen (produit de 2^n-1, donc nombres de la forme 1+)
+# -> boucle proche de O(n^2) via la même somme de Gauss que pour l'Exo 1, complexité totale O(n^2)
+NEW "EXO3" 3
+START @INIT
+END @YES "VALID"
+UNDEFINED @NO "INVALID"
+FROM @INIT
+'0|'1,'_,'_ R,S,S @INIT
+'=,'_,'_ '=,'_,'# R,S,S @A
+FROM @A
+'0|'1|'x,'_,'# R,S,S @A
+'_,'_,'# L,S,S @B
+FROM @B
+'1,'_|'0|'1,'# '_,'_|'0|'1,'# L,S,S @C
+'0,'_|'0|'1,'# '_,'0|'0|'1,'# L,L,L @Bz
+'x,'0|'1|'_,'# L,R,R @FIND
+FROM @Bz
+'0|'1,'0,'_ '0|'1,'0,'# S,S,S @B
+'0|'1,'_,'_ '0|'1,'0,'# S,S,S @B
+'0|'1,'1,'_ '0|'1,'1,'# S,S,S @B
+'x,'_,'_ 'x,'_,'# S,S,S @B
+FROM @C
+'0|'1,'_,'# L,S,S @C
+'0|'1,'0,'# L,S,S @C
+'0|'1,'1,'# L,S,S @C
+'x,'_|'0|'1,'# L,S,S @D
+FROM @D
+'0|'1,'_,'# '0|'1,'0|'1,'# L,L,L @D
+'0|'1,'0,'# '0|'1,'0|'1,'# L,L,L @D
+'0|'1,'_,'_ '0|'1,'0|'1,'_ L,L,L @D
+'0|'1,'0,'_ '0|'1,'0|'1,'_ L,L,L @D
+'0,'1,'_|'# L,L,L @D
+'1,'1,'_|'# '1,'0,'_|'# L,L,L @D_carry
+'=,'_,'_ S,R,R @E
+FROM @D_carry
+'1,'1,'_ '1,'1,'_ L,L,L @D_carry
+'0|'=,'0,'_ '0,'1,'_ L,L,L @D
+'0|'=,'0,'# '0,'1,'# L,L,L @D
+'0,'_,'_ '0,'1,'_ L,L,L @D
+'1,'_|'0,'_ '1,'0,'_ L,L,L @D_carry
+'0,'1,'_|'# '0,'0,'_|'# L,L,L @D_carry
+'=,'_,'_ '=,'1,'_ S,R,R @E
+FROM @E
+'=,'1|'0,'_ S,R,R @E
+'=,'1|'0,'# S,L,L @Ep
+FROM @Ep
+'=,'1|'0|'_,'_ '=,'1|'0|'_,'# R,S,S @G
+FROM @G
+'1|'0|'x,'0,'_ R,S,S @G
+'1|'0|'x,'1,'_ R,S,S @G
+'1|'0|'x,'_,'_ R,S,S @G
+'_,'0|'1|'_,'_ L,S,S @B
+'1|'0|'x,'0,'# R,S,S @G
+'1|'0|'x,'1,'# R,S,S @G
+'1|'0|'x,'_,'# R,S,S @G
+'_,'0|'1|'_,'# L,S,S @B
+FROM @FIND
+'0|'1,'1,'# L,S,S @FIND
+'0|'1,'0,'# L,S,S @FIND
+'=,'1|'0,'# S,R,R @FIND
+'=,'_,'_ L,L,L @COMP
+FROM @COMP
+'0|'1,'0|'1,'_ L,L,L @COMP
+'0|'1,'0|'1,'# L,L,L @COMP
+'_,'_,'_|'# S,S,S @YES
+
+
+# Meilleur cas : produit de puissances de 2, donc nombres de la forme 10*
+# -> complexité O(n^2)
+# Pire cas (et en l'occurrence cas moyen) : produit de 2^n-1, donc nombres de la forme 1+
+# -> complexité O(n^3)
+NEW "EXO4" 1
+START @INIT
+END @YES "VALID"
+END @NO "INVALID"
+FROM @INIT
+'0|'1 R @INIT
+'= L @CHECK_EVEN
+FROM @CHECK_EVEN
+'0 '# R @OPTIM_EVEN
+'1 R @TO_END
+FROM @OPTIM_EVEN
+'=|'1|'0|'# R @OPTIM_EVEN
+'x L @OPTIM_CHECK1
+FROM @OPTIM_CHECK1
+'# L @OPTIM_CHECK1
+'1 R @OPTIM_EVEN2
+'0 '# R @TO_END
+FROM @OPTIM_EVEN2
+'x|'0|'1|'# R @OPTIM_EVEN2
+'_ L @OPTIM_CHECK2
+FROM @OPTIM_CHECK2
+'# L @OPTIM_CHECK2
+'1 S @NO # produit pair mais pas de facteur pair
+'0 '# L @DEC_B
+FROM @DEC_B
+'0 '# L @DIV_C_2
+'1 '0 L @DEC_B_END
+'x L @TO_CHECK
+FROM @DEC_B_END
+'1|'0 L @DEC_B_END
+'x L @PROC_A
+FROM @PROC_A
+'1 'Q L @FIND_R
+'0 L @NEXT_ONE
+'# L @PROC_A
+'= R @TO_END
+FROM @FIND_R
+'0|'1 L @FIND_R
+'= L @FIND_REAL_R
+FROM @FIND_REAL_R
+'Z|'U|'# L @FIND_REAL_R
+'0|'1 S @DEC_R
+FROM @DEC_R
+'0 '1 L @DEC_R_CARRY
+'1 '0 L @DEC_R_END
+FROM @DEC_R_CARRY
+'1 '0 L @DEC_R_END
+'0 '1 L @DEC_R_CARRY
+'_ S @NO # R < A * B
+FROM @DEC_R_END
+'_|'0|'1|'=|'Z|'U|'# R @DEC_R_END
+'P|'Q '0|'1 L @NEXT_ONE
+FROM @NEXT_ONE
+'0 L @NEXT_ONE
+'1 'Q R @EQU
+'= L @RESTORE_LEFT_PRE
+FROM @EQU
+'_|'0|'1|'=|'# R @EQU
+'x|'z|'u L @COUNT_D
+FROM @COUNT_D
+'# L @COUNT_D
+'0|'1 'z|'u L @TOG_LAST
+'P|'Q L @FIND_R
+FROM @TOG_LAST
+'0|'1|'P|'Q L @TOG_LAST
+'= L @TOGGLE
+FROM @TOGGLE
+'0|'1 'Z|'U R @BACK
+'Z|'U|'# L @TOGGLE
+FROM @BACK
+'=|'0|'1|'P|'Q|'Z|'U|'# R @BACK
+'z|'u L @COUNT_D
+FROM @RESTORE_LEFT_PRE
+'# L @RESTORE_LEFT_PRE
+'0|'1|'Z|'U S @RESTORE_LEFT
+FROM @RESTORE_LEFT
+'# R @RESTORE_LEFT
+'Z|'U '0|'1 L @RESTORE_LEFT
+'0|'1|'_ R @RESTORE_LEFT
+'= R @RESTORE_RIGHT
+FROM @RESTORE_RIGHT
+'z|'u '0|'1 R @RESTORE_RIGHT
+'0|'1|'# R @RESTORE_RIGHT
+'x R @TO_END_2
+FROM @TO_CHECK
+'0|'1|'# L @TO_CHECK
+'= L @CHECK_ZERO
+FROM @CHECK_ZERO
+'0|'# L @CHECK_ZERO
+'1 S @NO # R > A * B
+'_ S @YES # R = A * B
+FROM @TO_END
+'0|'1|'=|'# R @TO_END
+'_ L @DEC_B
+'x R @TO_END_2
+FROM @TO_END_2
+'0|'1|'= R @TO_END_2
+'_|'# L @DEC_B
+FROM @DIV_C_2
+'x L @TO_CHECK
+'0|'1|'# L @DIV_C_2_2
+FROM @DIV_C_2_2
+'0|'1|'x|'# L @DIV_C_2_2
+'= L @FIND_LAST_ZERO
+FROM @FIND_LAST_ZERO
+'# L @FIND_LAST_ZERO
+'0 '# L @CHECK_EVEN
+'1 S @NO # facteur pair mais produit impair
+
+# cf. Exo 1
+NEW "EXO5" 1
+START @INIT
+END @YES "VALID"
+END @TOO_LOW "INVALID"
+END @TOO_HIGH "INVALID"
+# C = A * B
+FROM @INIT # on va tout à droite
+'1|'=|'x R @INIT
+'_ L @NEXT
+FROM @NEXT # ici on décrémente B de 1 et C de A
+'1 '_ L @LEFT
+'x L @CHECK
+FROM @LEFT
+'1 L @LEFT
+'x L @READ
+FROM @READ
+'1 'A L @NAV
+'= R @INIT
+FROM @NAV
+'1|'= L @NAV
+'_ R @NAVEND
+FROM @NAVEND
+'1 '_ R @NAVNEXT
+'= S @TOO_LOW # C < A * B
+FROM @NAVNEXT
+'1|'= R @NAVNEXT
+'A '1 L @READ
+FROM @CHECK
+'1 L @CHECK
+'= L @CHECK2
+FROM @CHECK2
+'_ S @YES # C = A * B
+'1 S @TOO_HIGH # C > A * B
+
